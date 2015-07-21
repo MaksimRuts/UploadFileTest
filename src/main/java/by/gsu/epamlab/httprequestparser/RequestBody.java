@@ -5,21 +5,21 @@ import java.util.*;
 public class RequestBody {
     public static final int FILE_START_POSITION = 3;
     private String token;
-    private Map<String, List<String>> attributes;
+    private Map<String, List<byte[]>> attributes;
 
-    public RequestBody(String token, Map<String, List<String>> attributes) {
+    public RequestBody(String token, Map<String, List<byte[]>> attributes) {
         this.token = token;
         this.attributes = attributes;
     }
 
     public String getAttribute(String name) {
         if (attributes.containsKey(name)) {
+            List<byte[]> element = attributes.get(name);
             StringBuilder builder = new StringBuilder();
-            List<String> list = attributes.get(name);
-            for (int i = ParserConstants.Request.ELEMENT_ATTRIBUTE_POSITION; i < list.size(); i++) {
-                builder.append(list.get(i)).append(ParserConstants.Request.NEXT_LINE);
+
+            for (int i = ParserConstants.Request.ELEMENT_ATTRIBUTE_POSITION; i < element.size(); i++) {
+                builder.append(new String(element.get(i)));
             }
-            builder.delete(builder.lastIndexOf(ParserConstants.Request.NEXT_LINE), builder.length());
             return builder.toString();
         } else {
             return null;
@@ -28,26 +28,25 @@ public class RequestBody {
 
     public UploadedFile getFile(String name) {
         if (attributes.containsKey(name)) {
-            List<String> rawFile = attributes.get(name);
+            List<byte[]> rawFile = attributes.get(name);
             UploadedFile file = new UploadedFile();
-            String filename = rawFile.get(ParserConstants.Request.HEADER_POSITION);
-            StringBuilder builder = new StringBuilder();
-            builder.append(ParserConstants.Request.ELEMENT_PREAMBLE)
-                    .append(name)
-                    .append(ParserConstants.Request.ELEMENT_PREAMBLE_END)
-                    .append(ParserConstants.Request.ELEMENTS_SEPARATOR)
-                    .append(ParserConstants.Request.FILENAME);
+            byte[] rawFilename = rawFile.get(ParserConstants.Request.HEADER_POSITION);
+            int filenameStartPosition = ParserConstants.Request.ELEMENT_PREAMBLE.length()
+                    + name.length()
+                    + ParserConstants.Request.QUOTE.length()
+                    + ParserConstants.Request.ELEMENTS_SEPARATOR.length()
+                    + ParserConstants.Request.FILENAME.length();
+            int filenameEndPosition = filenameStartPosition;
+            while (ParserConstants.Request.QUOTE.charAt(0) != rawFilename[filenameEndPosition++]);
+            String filename = new String(rawFilename, filenameStartPosition, filenameEndPosition - filenameStartPosition - 1);
 
-            filename = filename.replaceFirst(builder.toString(), "");
-            int pos = filename.lastIndexOf(ParserConstants.Request.ELEMENT_PREAMBLE_END);
-            filename = filename.substring(0, pos);
             file.setFilename(filename);
 
-            List<String> newList = new ArrayList<String>(rawFile);
+            List<byte[]> newList = new ArrayList<byte[]>(rawFile);
             newList.remove(0);
             newList.remove(0);
             newList.remove(0);
-            file.setConsist(newList);
+            file.setContent(newList);
             return file;
         } else {
             return null;
@@ -57,11 +56,10 @@ public class RequestBody {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, List<String>> entry : attributes.entrySet()) {
-            builder.append(token)
-                    .append(ParserConstants.Request.NEXT_LINE);
-            for (String s : entry.getValue()) {
-                builder.append(s).append(ParserConstants.Request.NEXT_LINE);
+        for (Map.Entry<String, List<byte[]>> entry : attributes.entrySet()) {
+            builder.append(token).append(ParserConstants.Request.NEXT_LINE);
+            for (byte[] s : entry.getValue()) {
+                builder.append(new String(s));
             }
         }
         builder.append(token).append(ParserConstants.Request.TOKEN_FOOTER);
