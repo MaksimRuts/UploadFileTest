@@ -37,15 +37,10 @@ public class UploadedFile {
             for (byte[] arr : content) {
                 fileOutputStream.write(arr);
             }
-
             return true;
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            // todo
             return false;
         } catch (IOException e) {
-            // todo
-            e.printStackTrace();
             return false;
         } finally {
             if (writer != null) {
@@ -62,7 +57,6 @@ public class UploadedFile {
                     e.printStackTrace();
                 }
             }
-
         }
     }
 }

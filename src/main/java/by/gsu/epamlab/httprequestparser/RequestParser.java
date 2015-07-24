@@ -15,14 +15,15 @@ public class RequestParser {
         byte[] result = new byte[ARRAY_SIZE];
 
         bytesCount = stream.readLine(result, 0, ARRAY_SIZE);
-        byte[] tokenBin = Arrays.copyOf(result, bytesCount - 2);
+        byte[] tokenBin = Arrays.copyOf(result, bytesCount - ParserConstants.Request.NEXT_LINE.length());
 
         List<byte[]> element = new ArrayList<byte[]>();
         while ((bytesCount = stream.readLine(result, 0, ARRAY_SIZE)) != -1) {
             if (Arrays.equals(tokenBin, Arrays.copyOf(result, tokenBin.length))) {
                 String header = getElementName(element);
+                // remove NEXT_LINE symbols from last element
                 byte[] last = element.remove(element.size() - 1);
-                element.add(Arrays.copyOf(last, last.length - 2));
+                element.add(Arrays.copyOf(last, last.length - ParserConstants.Request.NEXT_LINE.length()));
                 attributes.put(header, element);
                 element = new ArrayList<byte[]>();
             } else {

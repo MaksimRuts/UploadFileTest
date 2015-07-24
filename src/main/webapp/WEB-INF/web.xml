@@ -17,5 +17,4 @@
     <welcome-file-list>
         <welcome-file>/upload.jsp</welcome-file>
     </welcome-file-list>
-
 </web-app>
